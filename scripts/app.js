@@ -345,7 +345,7 @@ APP.Main = (function() {
     var loadThreshold = (scrollHeight - offsetHeight -
         LAZY_LOAD_THRESHOLD);
     if (scrollTop > loadThreshold)
-      loadStoryBatch();
+      requestAnimationFrame(loadStoryBatch);
   });
 
   function loadStoryBatch() {
