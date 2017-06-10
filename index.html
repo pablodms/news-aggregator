@@ -33,7 +33,7 @@ limitations under the License.
 
   <script id="tmpl-story" type="text/x-handlebars-template">
     <h1 class="story__title">{{ title }}</h1>
-    <div class="story__score">{{ score }}</div>
+    <div class="story__score"><div class="story__circle"></div><span class="story__value">{{ score }}</span></div>
     <div class="story__by">Posted by {{ by }}{{#if time }}, {{ formatRelative time }}{{/if }}
     </div>
   </script>
@@ -91,6 +91,6 @@ limitations under the License.
     <script src="scripts/namespace.js"></script>
     <script src="scripts/data.js"></script>
     <script src="scripts/app.js"></script>
-
+    
   </body>
 </html>

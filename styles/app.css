@@ -37,20 +37,20 @@ body {
   display: -ms-flexbox;
   display: flex;
   -webkit-flex-direction: column;
-      -ms-flex-direction: column;
-          flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
   -webkit-flex-wrap: nowrap;
-      -ms-flex-wrap: nowrap;
-          flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
   -webkit-justify-content: flex-start;
-      -ms-flex-pack: start;
-          justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
   -webkit-align-items: stretch;
-      -ms-flex-align: stretch;
-          align-items: stretch;
+  -ms-flex-align: stretch;
+  align-items: stretch;
   -ms-flex-line-pack: stretch;
-      -webkit-align-content: stretch;
-          align-content: stretch;
+  -webkit-align-content: stretch;
+  align-content: stretch;
   background: #ececec;
 }
 
@@ -92,14 +92,15 @@ a {
   opacity: 0.54;
 }
 
-body.details-active .story__title,
-body.details-active .story__by,
-body.details-active .story__score {
+
+.story__title.details-active,
+.story__by.details-active,
+.story__score.details-active {
   transition: opacity 0.5s ease-out;
-  opacity: 0 !important;
+  /* opacity: 0 !important; */
 }
 
-body.details-active .story {
+.story.details-active {
   background: linear-gradient(to bottom, #FFF 0%, #FFF 100%);
 }
 
@@ -111,12 +112,13 @@ body.raised .header {
 main {
   padding-top: 156px;
   -webkit-flex: 1;
-      -ms-flex: 1;
-          flex: 1;
+  -ms-flex: 1;
+  flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   z-index: 0;
+  will-change: transform;
 }
 
 main.loading {
@@ -151,20 +153,11 @@ main.loading {
   min-height: 90px;
   cursor: pointer;
   transition: all 0.4s ease-out;
-}
-
-.story:after {
-  display: block;
-  content: '';
-  width: 100%;
-  position: absolute;
-  left: 0;
-  bottom: 0;
   border-bottom: 1px solid #dedede;
 }
 
-.story:nth-last-child(-n+1):after {
-  display: none;
+.story:nth-last-child(-n+1) {
+  border-bottom: none;
 }
 
 .story__title {
@@ -185,11 +178,9 @@ main.loading {
 }
 
 .story__score {
-  position: absolute;
   width: 40px;
   height: 40px;
-  background: #FFB300;
-  border-radius: 50%;
+  position: absolute;
   color: rgba(255,255,255,0.87);
   font-weight: 500;
   font-size: 13px;
@@ -197,11 +188,24 @@ main.loading {
   top: 16px;
   text-align: center;
   line-height: 40px;
+  overflow: hidden;
+}
 
-  box-shadow:
+.story__circle {
+    border-radius: 50%;
+    box-shadow:
       0px 2px 5px 0px rgba(0, 0, 0, 0.06),
       0px 2px 5px 0px rgba(0, 0, 0, 0.08),
       0px 2px 7px 0px rgba(0, 0, 0, 0.10);
+    background: #FFB300;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.story__value {
+    position: relative;
+    z-index: 1;
 }
 
 .story-details {
@@ -209,25 +213,25 @@ main.loading {
   display: -ms-flexbox;
   display: flex;
   -webkit-flex-direction: column;
-      -ms-flex-direction: column;
-          flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
   -webkit-flex-wrap: nowrap;
-      -ms-flex-wrap: nowrap;
-          flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
   -webkit-justify-content: flex-start;
-      -ms-flex-pack: start;
-          justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
   -webkit-align-items: stretch;
-      -ms-flex-align: stretch;
-          align-items: stretch;
+  -ms-flex-align: stretch;
+  align-items: stretch;
   -ms-flex-line-pack: stretch;
-      -webkit-align-content: stretch;
-          align-content: stretch;
-
+  -webkit-align-content: stretch;
+  align-content: stretch;
   opacity: 0;
   position: fixed;
   top: 0;
-  left: 100%;
+  /* left: 100%; */
+  transform: translateX(100%);
   width: 100%;
   height: 100%;
   background: white;
@@ -236,26 +240,24 @@ main.loading {
       0px 2px 5px 0px rgba(0, 0, 0, 0.06),
       0px 2px 5px 0px rgba(0, 0, 0, 0.08),
       0px 2px 7px 0px rgba(0, 0, 0, 0.10);
-
   overflow: hidden;
   transition: opacity 0.3s ease-out;
 }
 
 .story-details * {
-  will-change: transform;
-  transform: translateZ(0);
+  /* will-change: transform; */
+  /* transform: translateZ(0); */
 }
 
 .story-details__content {
   -webkit-flex: 1;
-      -ms-flex: 1;
-          flex: 1;
+  -ms-flex: 1;
+  flex: 1;
   overflow-x: hidden;
   overflow-y: auto;
-
   -webkit-overflow-scrolling: touch;
-
   padding: 0 16px 72px 72px;
+  will-change: transform;
 }
 
 .story-details__title {
@@ -279,7 +281,7 @@ main.loading {
 .story-details__header {
   padding: 16px 16px 64px 72px;
   background: #FFA000;
-  position: absolute;
+  position: relative;
   left: 0;
   top: 0;
   width: 100%;
