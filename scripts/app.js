@@ -18,7 +18,6 @@ APP.Main = (function() {
 
   var LAZY_LOAD_THRESHOLD = 300;
   var $ = document.querySelector.bind(document);
-
   var stories = null;
   var storyStart = 0;
   var count = 100;
@@ -70,11 +69,10 @@ APP.Main = (function() {
 
     var story = document.getElementById('s-' + key);
     if (story) {
-        requestAnimationFrame(function()
-        {
+        requestAnimationFrame(function() {
             details.time *= 1000;
             var html = storyTemplate(details);
-            story.addEventListener('click', onStoryClick.bind(this, details));
+            story.addEventListener('click', requestAnimationFrame.bind(this, onStoryClick.bind(this, details)));
             story.classList.add('clickable');
             story.innerHTML = html;
 
@@ -89,8 +87,6 @@ APP.Main = (function() {
 
 
   function onStoryClick(details) {
-      
-    requestAnimationFrame(function() {
 
     // Create and append the story. A visual change...
     // perhaps that should be in a requestAnimationFrame?
@@ -117,10 +113,10 @@ APP.Main = (function() {
     //var headerHeight = storyHeader.getBoundingClientRect().height;
     //storyContent.style.paddingTop = headerHeight + 'px';
     
-    closeButton.addEventListener('click', hideStory.bind(this));
+    closeButton.addEventListener('click', requestAnimationFrame.bind(this, hideStory.bind(this)));
     
     // Wait a little time then show the story details.
-    setTimeout(showStory.bind(this), 60);
+    setTimeout(requestAnimationFrame.bind(this, showStory.bind(this)), 60);
 
     if (typeof kids === 'undefined')
       return;
@@ -132,21 +128,10 @@ APP.Main = (function() {
       comment.classList.add('story-details__comment');
       comment.innerHTML = commentHtml;
       commentsElement.appendChild(comment);
-       
-      // Update the comment with the live data.
-      APP.Data.getStoryComment(kids[k], function(commentDetails) {
-
-          commentDetails.time *= 1000;
-
-          var comment = commentsElement.querySelector(
-              '#sdc-' + commentDetails.id);
-          comment.innerHTML = storyDetailsCommentTemplate(
-              commentDetails,
-              localeData);
-        });
-      }
+      worker.postMessage({'statement': 'comment', 'id': kids[k]});
+    }
       
-    });
+
   }
 
   function showStory() {
@@ -156,61 +141,60 @@ APP.Main = (function() {
 
     inDetails = true;
 
-    requestAnimationFrame(function() {
-        var storyDetailsPosition = storyDetails.getBoundingClientRect(); 
-        var left = storyDetailsPosition.left;
-        var documentBoundingRect = document.body.getBoundingClientRect();
-        var modStories = document.querySelectorAll('.story');
-        var change = [];
-        for(var i = 0; i < modStories.length; i++) {
-            var boundingRect = modStories[i].getBoundingClientRect();
-            if (boundingRect.bottom >= 0 &&
-                boundingRect.top < documentBoundingRect.bottom) {
-                var story = modStories[i];
-                change.push(story);
-                change.push(story.querySelector('.story__title'));
-                change.push(story.querySelector('.story__by'));
-                change.push(story.querySelector('.story__score'));
-            }
+    var storyDetailsPosition = storyDetails.getBoundingClientRect(); 
+    var left = storyDetailsPosition.left;
+    var documentBoundingRect = document.body.getBoundingClientRect();
+    var modStories = document.querySelectorAll('.story');
+    var change = [];
+    for(var i = 0; i < modStories.length; i++) {
+        var boundingRect = modStories[i].getBoundingClientRect();
+        if (boundingRect.bottom >= 0 &&
+            boundingRect.top < documentBoundingRect.bottom) {
+            var story = modStories[i];
+            change.push(story);
+            change.push(story.querySelector('.story__title'));
+            change.push(story.querySelector('.story__by'));
+            change.push(story.querySelector('.story__score'));
         }
-        
-        for (var i = 0; i < change.length; i++) {
-            change[i].classList.add('details-active');
-        }
-        storyDetails.style.opacity = 1;
+    }
 
-        function animate () {
+    for (var i = 0; i < change.length; i++) {
+        change[i].classList.add('details-active');
+    }
+    storyDetails.style.opacity = 1;
 
-          if (!inDetails)
-            return;
-          // Find out where it currently is.
-          // var storyDetailsPosition = storyDetails.getBoundingClientRect(); 
-          // Set the left value if we don't have one already.
-          //if (left === null)
-          //  left = storyDetailsPosition.left;
+    function animate () {
 
-          // Now figure out where it needs to go.
-          // left += (0 - storyDetailsPosition.left) * 0.1;
-          left -= left * 0.1;
+      if (!inDetails)
+        return;
+      // Find out where it currently is.
+      // var storyDetailsPosition = storyDetails.getBoundingClientRect(); 
+      // Set the left value if we don't have one already.
+      //if (left === null)
+      //  left = storyDetailsPosition.left;
 
-          // Set up the next bit of the animation if there is more to do.
-          if (Math.abs(left) > 0.5)
-            requestAnimationFrame(animate);
-          else
-            left = 0;
+      // Now figure out where it needs to go.
+      // left += (0 - storyDetailsPosition.left) * 0.1;
+      left -= left * 0.1;
 
-          // And update the styles. Wait, is this a read-write cycle?
-          // I hope I don't trigger a forced synchronous layout!
-          //storyDetails.style.left = left + 'px';
-          storyDetails.style.transform = 'translateX('+left+'px)';
-        }
-
-        // We want slick, right, so let's do a setTimeout
-        // every few milliseconds. That's going to keep
-        // it all tight. Or maybe we're doing visual changes
-        // and they should be in a requestAnimationFrame
+      // Set up the next bit of the animation if there is more to do.
+      if (Math.abs(left) > 10)
         requestAnimationFrame(animate);
-    });
+      else
+        left = 0;
+
+      // And update the styles. Wait, is this a read-write cycle?
+      // I hope I don't trigger a forced synchronous layout!
+      //storyDetails.style.left = left + 'px';
+      storyDetails.style.transform = 'translateX('+left+'px)';
+    }
+
+    // We want slick, right, so let's do a setTimeout
+    // every few milliseconds. That's going to keep
+    // it all tight. Or maybe we're doing visual changes
+    // and they should be in a requestAnimationFrame
+    requestAnimationFrame(animate);
+
   }
 
   function hideStory() {
@@ -221,47 +205,45 @@ APP.Main = (function() {
     inDetails = false;
     var left = 0;
     
-    requestAnimationFrame(function() {
         
-        //document.body.classList.remove('details-active');
-        var modStories = document.querySelectorAll('.story.details-active, .story__title.details-active, .story__by.details-active, .story__score.details-active');
-        for(var i = 0; i < modStories.length; i++) {
-            modStories[i].classList.remove('details-active');
-        }
-        storyDetails.style.opacity = 0;
+    //document.body.classList.remove('details-active');
+    var modStories = document.querySelectorAll('.story.details-active, .story__title.details-active, .story__by.details-active, .story__score.details-active');
+    for(var i = 0; i < modStories.length; i++) {
+        modStories[i].classList.remove('details-active');
+    }
+    storyDetails.style.opacity = 0;
 
-        function animate () {
+    function animate () {
 
-          if (inDetails)
-              return;
-          // Find out where it currently is.
-          var mainPosition = main.getBoundingClientRect();
-          var storyDetailsPosition = storyDetails.getBoundingClientRect();
-          var target = mainPosition.width + 100;
+      if (inDetails)
+          return;
+      // Find out where it currently is.
+      var mainPosition = main.getBoundingClientRect();
+      var storyDetailsPosition = storyDetails.getBoundingClientRect();
+      var target = mainPosition.width + 100;
 
-          // Now figure out where it needs to go.
-          left += (target - storyDetailsPosition.left) * 0.1;
+      // Now figure out where it needs to go.
+      left += (target - storyDetailsPosition.left) * 0.1;
 
-          // Set up the next bit of the animation if there is more to do.
-          if (Math.abs(left - target) > 0.5) {
-            requestAnimationFrame(animate);
-          } else {
-            left = target;
-            inDetails = false;
-          }
-
-          // And update the styles. Wait, is this a read-write cycle?
-          // I hope I don't trigger a forced synchronous layout!
-          //storyDetails.style.left = left + 'px';
-          storyDetails.style.transform = 'translateX('+left+'px)';
-        }
-
-        // We want slick, right, so let's do a setTimeout
-        // every few milliseconds. That's going to keep
-        // it all tight. Or maybe we're doing visual changes
-        // and they should be in a requestAnimationFrame
+      // Set up the next bit of the animation if there is more to do.
+      if (Math.abs(left - target) > 0.5) {
         requestAnimationFrame(animate);
-    });
+      } else {
+        left = target;
+        inDetails = false;
+      }
+
+      // And update the styles. Wait, is this a read-write cycle?
+      // I hope I don't trigger a forced synchronous layout!
+      //storyDetails.style.left = left + 'px';
+      storyDetails.style.transform = 'translateX('+left+'px)';
+    }
+
+    // We want slick, right, so let's do a setTimeout
+    // every few milliseconds. That's going to keep
+    // it all tight. Or maybe we're doing visual changes
+    // and they should be in a requestAnimationFrame
+    requestAnimationFrame(animate);
   }
 
   /**
@@ -321,31 +303,33 @@ APP.Main = (function() {
 
   main.addEventListener('scroll', function() {
 
-    var header = $('header');
-    var headerTitles = header.querySelector('.header__title-wrapper');
-    var scrollTop = main.scrollTop;
-    var scrollHeight = main.scrollHeight;
-    var offsetHeight = main.offsetHeight;
-    var scrollTopCapped = Math.min(70, main.scrollTop);
-    var scaleString = 'scale(' + (1 - (scrollTopCapped / 300)) + ')';
+    requestAnimationFrame(function() {
+        var header = $('header');
+        var headerTitles = header.querySelector('.header__title-wrapper');
+        var scrollTop = main.scrollTop;
+        var scrollHeight = main.scrollHeight;
+        var offsetHeight = main.offsetHeight;
+        var scrollTopCapped = Math.min(70, main.scrollTop);
+        var scaleString = 'scale(' + (1 - (scrollTopCapped / 300)) + ')';
 
-    colorizeAndScaleStories();
+        colorizeAndScaleStories();
 
-    header.style.height = (156 - scrollTopCapped) + 'px';
-    headerTitles.style.webkitTransform = scaleString;
-    headerTitles.style.transform = scaleString;
+        header.style.height = (156 - scrollTopCapped) + 'px';
+        headerTitles.style.webkitTransform = scaleString;
+        headerTitles.style.transform = scaleString;
 
-    // Add a shadow to the header.
-    if (scrollTop > 70)
-      document.body.classList.add('raised');
-    else
-      document.body.classList.remove('raised');
+        // Add a shadow to the header.
+        if (scrollTop > 70)
+          document.body.classList.add('raised');
+        else
+          document.body.classList.remove('raised');
 
-    // Check if we need to load the next batch of stories.
-    var loadThreshold = (scrollHeight - offsetHeight -
-        LAZY_LOAD_THRESHOLD);
-    if (scrollTop > loadThreshold)
-      requestAnimationFrame(loadStoryBatch);
+        // Check if we need to load the next batch of stories.
+        var loadThreshold = (scrollHeight - offsetHeight -
+            LAZY_LOAD_THRESHOLD);
+        if (scrollTop > loadThreshold)
+          requestAnimationFrame(loadStoryBatch);
+    });
   });
 
   function loadStoryBatch() {
@@ -372,19 +356,38 @@ APP.Main = (function() {
         time: 0
       });
       main.appendChild(story);
-
-      APP.Data.getStoryById(stories[i], onStoryData.bind(this, key));
+      worker.postMessage({'statement': 'getID', 'id': stories[i], 'key': key});
+      //APP.Data.getStoryById(stories[i], onStoryData.bind(this, key));
     }
 
     storyStart += count;
 
   }
 
-  // Bootstrap in the stories.
-  APP.Data.getTopStories(function(data) {
-    stories = data;
-    loadStoryBatch();
-    main.classList.remove('loading');
-  });
+  var worker = new Worker('scripts/worker.js');
+  worker.postMessage({'statement': 'top'});
+  worker.onmessage = function(e) {
+      var info = e.data;
+      switch (info.statement) 
+      {
+          case 'top': 
+              stories = info.data;
+              requestAnimationFrame(loadStoryBatch);
+              main.classList.remove('loading');
+              break;
+          case 'getID': 
+              onStoryData.call(this, info.key, info.data);
+              break;
+          case 'comment': 
+            requestAnimationFrame(function() {
+                var commentDetails = info.data;
+                commentDetails.time *= 1000;
+                var commentsElement = storyDetails.querySelector('.js-comments');
+                var comment = commentsElement.querySelector('#sdc-' + commentDetails.id);
+                comment.innerHTML = storyDetailsCommentTemplate(commentDetails,localeData);
+            });
+            break;
+      }
+    }
 
 })();
